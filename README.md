@@ -22,11 +22,13 @@
 
 6. Как выглядит команда запуска `playbook`, если переменные зашифрованы?
 
-Пароль можно передать ччерез файл, либо интерактивный ввод:
-```
+Пароль можно передать через файл, либо интерактивный ввод:
+
+```bash
 ansible-playbook --vault-password-file={имя файла}
 ansible-playbook --ask-vault-password
 ```
+
 7. Как называется модуль подключения к host на windows?
 
 В документации нашел winrm (Run tasks over Microsoft's WinRM), но помойму был какой-то еще вариант. =)
@@ -41,7 +43,8 @@ ansible-playbook --ask-vault-password
 
 ## Доп. ответы:
 Скрипт автоматизации:
-```sh
+
+```bash
 #!/usr/bin/env bash
 
 run_fedora=$(docker ps -a --format "{{.Names}}" | grep fedora | wc -l)
@@ -50,20 +53,19 @@ run_ubuntu=$(docker ps -a --format "{{.Names}}" | grep ubuntu | wc -l)
 
 if [ "$run_fedora" != 0 ]
 then  
-	
 	echo "--- 'fedora' is present in docker ps -a. Trying to remove..."
-        docker stop fedora && docker rm fedora
+    docker stop fedora && docker rm fedora
 fi
 
 if [ "$run_centos" != 0 ]
 then 
-        echo "--- 'centos' is present in docker ps -a. Trying to remove..."
+    echo "--- 'centos' is present in docker ps -a. Trying to remove..."
 	docker stop centos7 && docker rm centos7
 fi
 
 if [ "$run_ubuntu" != 0 ]
 then 
-        echo "--- 'ubuntu' is present in docker ps -a. Trying to remove..."
+    echo "--- 'ubuntu' is present in docker ps -a. Trying to remove..."
 	docker stop ubuntu && docker rm ubuntu
 fi
 
@@ -76,6 +78,7 @@ ansible-playbook -i inventory/prod.yml --vault-password-file=secret site.yml && 
 ```
 
 Вывод скрипта:
+
 ```
 vagrant@server1:~/ansible-netology$ ./ci_3container.sh 
 --- 'fedora' is present in docker ps -a. Trying to remove...
@@ -141,11 +144,13 @@ fedora
 ubuntu
 centos7
 ```
+
 Шифрование строки было выполнено командой:
 `ansible-vault encrypt_string --vault-password-file secret --name some_fact PaSSw0rd_for_FEDOR > group_vars/fedora/examp.yml`
 
 Процесс установки Ansible:
-```
+
+```bash
 ADD line to /etc/apt/sources.list 
 deb http://ppa.launchpad.net/ansible/ansible/ubuntu focal main
 
@@ -164,11 +169,38 @@ ansible [core 2.12.6]
   jinja version = 2.10.1
   libyaml = True
 ```
+
 Создание нового git окружения:
-```
+
+```bash
 vagrant@server1:~/ansible-netology$ git remote add github git@github.com:AirDRoN-lab/ansible-netology.git
 
 vagrant@server1:~/ansible-netology$ git remote -v
-github	git@github.com:AirDRoN-lab/ansible-netology.git (fetch)
-github	git@github.com:AirDRoN-lab/ansible-netology.git (push)
+github  git@github.com:AirDRoN-lab/ansible-netology.git (fetch)
+github  git@github.com:AirDRoN-lab/ansible-netology.git (push)
 ```
+
+## Доп. вопросы
+
+При шифровании строки командой:
+
+```bash
+vagrant@server1:~/ansible-netology$ ansible-vault encrypt_string --vault-password-file secret --name some_fact PaSSw0rd_for_225522 > group_vars/all/examp2.yml 
+vagrant@server1:~/ansible-netology$ cat group_vars/all/examp2.yml 
+some_fact: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          66383938313637366365343639656439333933323734616631363133366361633238346439303835
+          3234323035373262643866626434343265653064393835320a353266663361336664356265303534
+          33643636623237316632636164356139323532313864353036623637643364643465306632376166
+          6563306563333332310a613364353130373064346133323064343339643933326464323930333138
+          36306262376130353365633839663738316633613338646161353965646534656538
+```
+
+Расшифровать через ansible-vault decrypt (или edit) уже нельзя:
+
+```bash
+vagrant@server1:~/ansible-netology$ ansible-vault decrypt --vault-password-file secret group_vars/all/examp2.yml 
+ERROR! input is not vault encrypted data. /home/vagrant/ansible-netology/group_vars/all/examp2.yml is not a vault encrypted file for /home/vagrant/ansible-netology/group_vars/all/examp2.yml
+```
+
+Как расшифровать строку?
